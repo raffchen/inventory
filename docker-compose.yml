@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: dev-user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: dev_db
+      POSTGRES_DB: inventory
     ports:
       - 5432:5432
     expose:
@@ -23,7 +23,7 @@ services:
       - ./backend:/backend/:cached
     environment:
       PYTHONPATH: .
-      DATABASE_URL: "postgresql+asyncpg://dev-user:password@postgres:5432/dev_db"
+      DATABASE_URL: "postgresql+asyncpg://dev-user:password@postgres:5432/inventory"
     depends_on:
       - "postgres"
     ports:
