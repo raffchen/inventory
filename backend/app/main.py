@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from app.api.routers.inventory import router as inventory_router
+from app.routers.inventory import router as inventory_router
 from app.config import settings
 from app.database import sessionmanager
 
