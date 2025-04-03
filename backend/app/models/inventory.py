@@ -1,15 +1,10 @@
-import enum
-from datetime import UTC, datetime
+from datetime import datetime
 
-from sqlalchemy import TIMESTAMP, ForeignKey
+from app.dependencies.enums import UpdateType
+from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import Base
-
-
-class UpdateType(enum.Enum):
-    USED = "used"
-    RESTOCK = "restock"
 
 
 class Product(Base):
@@ -19,8 +14,18 @@ class Product(Base):
     name: Mapped[str]
     description: Mapped[str]
     quantity: Mapped[int]
-    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=func.now(),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        default=func.now(),
+        server_default=func.now(),
+        onupdate=func.now(),
+        server_onupdate=func.now(),
+    )
 
 
 class InventoryHistory(Base):
@@ -30,6 +35,9 @@ class InventoryHistory(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     quantity_change: Mapped[int]
     new_quantity: Mapped[int]
-    update_timestamp: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), default=lambda: datetime.now(UTC))
+    update_timestamp: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True),
+        server_default=func.now(),
+    )
     update_type: Mapped[UpdateType]
     update_machine: Mapped[str | None]
