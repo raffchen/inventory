@@ -2,6 +2,7 @@ import asyncio
 import os
 from logging.config import fileConfig
 
+import alembic_postgresql_enum
 from alembic import context
 from app.models import Base
 from asyncpg import Connection
