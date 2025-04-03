@@ -1,3 +1,3 @@
 from app.database import Base
 
-from .inventory import Product, InventoryHistory
+from .inventory import Product, ProductHistory

@@ -1,7 +1,13 @@
 import enum
 
 
+class UpdateField(enum.Enum):
+    NAME = "name"
+    DESCRIPTION = "description"
+    QUANTITY = "quantity"
+
+
 class UpdateType(enum.Enum):
     CREATE = "create"
-    USE = "use"
-    RESTOCK = "restock"
+    UPDATE = "update"
+    DELETE = "delete"

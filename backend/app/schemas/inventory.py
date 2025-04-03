@@ -37,4 +37,5 @@ class ProductUpdate(BaseModel):
     description: str | None = None
     quantity: int | None = None
     updated_at: datetime | None = None
-    update_machine: str | None = None
+    update_notes: str | None = None
+    update_source: str | None = None

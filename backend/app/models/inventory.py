@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.dependencies.enums import UpdateType
+from app.dependencies.enums import UpdateField, UpdateType
 from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,28 +16,28 @@ class Product(Base):
     quantity: Mapped[int]
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default=func.now(),
         server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
-        default=func.now(),
         server_default=func.now(),
-        onupdate=func.now(),
         server_onupdate=func.now(),
     )
+    deleted_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
 
 
-class InventoryHistory(Base):
-    __tablename__ = "inventory_history"
+class ProductHistory(Base):
+    __tablename__ = "product_history"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
-    quantity_change: Mapped[int]
-    new_quantity: Mapped[int]
+    update_field: Mapped[UpdateField]
+    old_value: Mapped[str | None]
+    new_value: Mapped[str | None]
     update_timestamp: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         server_default=func.now(),
     )
     update_type: Mapped[UpdateType]
-    update_machine: Mapped[str | None]
+    update_notes: Mapped[str | None]
+    update_source: Mapped[str | None]
