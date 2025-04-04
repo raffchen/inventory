@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException
 
 router = APIRouter(
     prefix="/api/inventory",
-    tags=["users"],
+    tags=["inventory"],
     responses={404: {"description": "Not found"}},
 )
 
