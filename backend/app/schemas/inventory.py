@@ -15,8 +15,30 @@ class ProductRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    # TODO: maybe this should be done on client side instead
     @field_serializer("created_at", "updated_at")
     def convert_to_local(self, dt: datetime) -> str:
+        local_tz = ZoneInfo(settings.local_timezone)
+        return dt.astimezone(local_tz).isoformat()
+
+
+class ProductReadFull(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+    quantity: int
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: datetime | None
+
+    # TODO: maybe this should be done on client side instead
+    @field_serializer("created_at", "updated_at", "deleted_at")
+    def convert_to_local(self, dt: datetime | None) -> str:
+        if dt is None:
+            return
+
         local_tz = ZoneInfo(settings.local_timezone)
         return dt.astimezone(local_tz).isoformat()
 

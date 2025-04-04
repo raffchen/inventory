@@ -1,6 +1,11 @@
 from app.dependencies.core import DBSessionDep
 from app.crud import inventory
-from app.schemas.inventory import ProductCreate, ProductRead, ProductUpdate
+from app.schemas.inventory import (
+    ProductCreate,
+    ProductRead,
+    ProductReadFull,
+    ProductUpdate,
+)
 from app.dependencies.exceptions import (
     ProductsNotFound,
     ProductNotFound,
@@ -20,7 +25,17 @@ async def read_products(db_session: DBSessionDep):
     try:
         products = await inventory.get_products(db_session)
     except ProductsNotFound as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        return []
+
+    return products
+
+
+@router.get("/all", response_model=list[ProductReadFull])
+async def read_all_products(db_session: DBSessionDep):
+    try:
+        products = await inventory.get_products(db_session, show_deleted=True)
+    except ProductsNotFound as e:
+        raise []
 
     return products
 
@@ -40,7 +55,7 @@ async def create_product(db_session: DBSessionDep, product: ProductCreate):
     product = ProductCreate.model_validate(product)
 
     try:
-        product = await inventory.create_product(db_session, product)
+        product = await inventory.create_or_replace_product(db_session, product)
     except ProductAlreadyExists as e:
         raise HTTPException(status_code=403, detail=str(e))
 
