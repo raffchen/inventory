@@ -57,7 +57,7 @@ async def create_product(db_session: DBSessionDep, product: ProductCreate):
     try:
         product = await inventory.create_or_replace_product(db_session, product)
     except ProductAlreadyExists as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
     return product
 
@@ -71,7 +71,7 @@ async def update_product(
     try:
         product = await inventory.update_product(db_session, product_id, update_data)
     except ProductNotFound as e:
-        raise HTTPException(status_code=403, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
     return product
 
