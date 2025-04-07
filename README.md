@@ -1,0 +1,1 @@
+Run tests with `docker compose run --rm backend pytest`
