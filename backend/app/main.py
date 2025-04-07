@@ -9,10 +9,8 @@ from app.routers.inventory import router as inventory_router
 from app.config import settings
 from app.database import sessionmanager
 
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.DEBUG if settings.log_level == "DEBUG" else logging.INFO,
-)
+
+logging.basicConfig(stream=sys.stdout, level=settings.log_level)
 
 
 @asynccontextmanager

@@ -44,6 +44,7 @@ class ProductReadFull(BaseModel):
 
 
 class ProductCreate(BaseModel):
+    # TODO: allow update_source
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
     id: int

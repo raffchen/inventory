@@ -43,6 +43,7 @@ async def get_product(db_session: AsyncSession, product_id: int):
 
 
 async def create_product(db_session: AsyncSession, product: ProductCreate):
+    # TODO: allow update_source
     try:
         new_product = Product(**product.model_dump(exclude_unset=True))
         db_session.add(new_product)
