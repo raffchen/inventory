@@ -15,9 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 async def get_products(db_session: AsyncSession, show_deleted: bool = False):
     if show_deleted:
-        stmt = select(Product)
+        stmt = select(Product).order_by(Product.id)
     else:
-        stmt = select(Product).where(Product.deleted_at.is_(None))
+        stmt = select(Product).where(Product.deleted_at.is_(None)).order_by(Product.id)
 
     products = (await db_session.scalars(stmt)).all()
 
