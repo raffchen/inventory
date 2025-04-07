@@ -165,9 +165,15 @@ async def update_product(
 
     update_dict = update_data.model_dump(exclude_unset=True)
 
+    update_notes = update_dict.get("update_notes")
+    update_source = update_dict.get("update_source")
+
     history_entries = []
 
     for key, value in update_dict.items():
+        if key in ["update_notes", "update_source"]:
+            continue
+
         if (old_val := getattr(product, key)) != value:
             setattr(product, key, value)
             history_entries.append(
@@ -177,6 +183,8 @@ async def update_product(
                     old_value=str(old_val),
                     new_value=str(value),
                     update_type=UpdateType.UPDATE,
+                    update_notes=update_notes,
+                    update_source=update_source,
                 )
             )
 
