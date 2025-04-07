@@ -344,3 +344,31 @@ async def test_delete_product_then_create_product_with_same_id():
 
         assert get_resp.status_code == 200
         assert compare_returned_json(get_resp.json(), product_data2)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_can_see_deleted_products_with_all_endpoint():
+    async with AsyncClient(
+        transport=ASGITransport(app=main_app), base_url="http://test"
+    ) as client:
+        product_data = {
+            "id": 1,
+            "name": "Table",
+            "description": "A table",
+            "quantity": 5,
+        }
+
+        await client.post("/api/inventory/", json=product_data)
+        await client.delete("/api/inventory/1")
+
+        get_resp = await client.get("/api/inventory/all")
+
+        assert get_resp.status_code == 200
+
+        ret = get_resp.json()
+
+        assert len(ret) == 1
+        assert compare_returned_json(
+            ret[0], product_data, ["created_at", "updated_at", "deleted_at"]
+        )
+        assert ret[0]["deleted_at"] is not None
