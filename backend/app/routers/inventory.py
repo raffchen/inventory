@@ -35,7 +35,7 @@ async def read_all_products(db_session: DBSessionDep):
     try:
         products = await inventory.get_products(db_session, show_deleted=True)
     except ProductsNotFound as e:
-        raise []
+        return []
 
     return products
 
