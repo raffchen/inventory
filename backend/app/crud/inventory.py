@@ -36,8 +36,6 @@ async def get_product(db_session: AsyncSession, product_id: int):
         )
     ).first()
 
-    print(product.deleted_at)
-
     if not product:
         raise ProductNotFound(product_id)
 
