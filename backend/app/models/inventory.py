@@ -1,10 +1,23 @@
+from enum import Enum
 from datetime import datetime
 
-from app.dependencies.enums import UpdateField, UpdateType
 from sqlalchemy import TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import Base
+
+
+class UpdateField(Enum):
+    NAME = "name"
+    DESCRIPTION = "description"
+    QUANTITY = "quantity"
+    DELETED_AT = "deleted_at"
+
+
+class UpdateType(Enum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
 
 
 class Product(Base):

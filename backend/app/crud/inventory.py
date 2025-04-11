@@ -1,12 +1,11 @@
 from datetime import datetime, timezone
 
-from app.dependencies.enums import UpdateField, UpdateType
 from app.dependencies.exceptions import (
     ProductAlreadyExists,
     ProductNotFound,
     ProductsNotFound,
 )
-from app.models import ProductHistory, Product
+from app.models import ProductHistory, Product, UpdateField, UpdateType
 from app.schemas import ProductCreate, ProductUpdate
 from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError

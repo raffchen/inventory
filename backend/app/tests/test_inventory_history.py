@@ -1,7 +1,6 @@
 import pytest
 from app.main import app as main_app
-from app.models import ProductHistory
-from app.dependencies.enums import UpdateField, UpdateType
+from app.models import ProductHistory, UpdateField, UpdateType
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 
