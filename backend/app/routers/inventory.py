@@ -34,8 +34,6 @@ async def read_products(
 ):
     try:
         products, total = await inventory.get_products(db_session, sort, range, filter)
-    except ProductsNotFound as e:
-        products, total = [], 0
     except MalformedInput as e:
         raise HTTPException(status_code=400, detail=str(e))
 

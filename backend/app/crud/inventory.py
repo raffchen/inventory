@@ -4,7 +4,6 @@ from app.dependencies.exceptions import (
     MalformedInput,
     ProductAlreadyExists,
     ProductNotFound,
-    ProductsNotFound,
 )
 from app.models import Product, ProductHistory, UpdateField, UpdateType
 from app.schemas import ProductCreate, ProductUpdate
@@ -66,13 +65,12 @@ async def get_products(
                 else:
                     stmt = stmt.where(filter_column == value)
 
-    # calculate total before range is applied
-    if range or filter:
-        total = await db_session.scalar(select(func.count()).select_from(stmt))
-    else:
-        total = 0
+    total = 0
 
     if range:
+        # calculate total before range is applied
+        total = await db_session.scalar(select(func.count()).select_from(stmt))
+
         start, end = range
         if end < start:
             raise MalformedInput(f"Range end cannot be less than range start")
@@ -81,7 +79,8 @@ async def get_products(
     products = (await db_session.scalars(stmt)).all()
 
     if not products:
-        raise ProductsNotFound()
+        # if range is out of bounds, we need to set total back to 0
+        total = 0
 
     return products, total
 
