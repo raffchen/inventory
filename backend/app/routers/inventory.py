@@ -35,19 +35,20 @@ async def read_products(
     try:
         products, total = await inventory.get_products(db_session, sort, range, filter)
     except ProductsNotFound as e:
-        return []
+        products, total = [], 0
     except MalformedInput as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     if range:
         response.headers["Content-Range"] = (
-            f"items {range[0]}-{range[0] + len(products) - 1}/{total}"
+            f"items {range[0]}-{int(total == 0) + range[0] + len(products) - 1}/{total}"
         )
 
     return products
 
 
 @router.get("/products/all", response_model=list[ProductReadFull])
+# TODO: update to match /products
 async def read_all_products(db_session: DBSessionDep):
     try:
         products, total = await inventory.get_products(db_session, show_deleted=True)

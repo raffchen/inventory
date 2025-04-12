@@ -22,6 +22,9 @@ async def get_products(
 ):
     stmt = select(Product)
 
+    if not show_deleted:
+        stmt = stmt.where(Product.deleted_at.is_(None))
+
     if sort:
         field, direction = sort
         sort_column = getattr(Product, field, None)
@@ -38,12 +41,6 @@ async def get_products(
             raise MalformedInput(f"Requested sort direction {direction} doesn't exist")
     else:
         stmt = stmt.order_by(Product.id)
-
-    if range:
-        start, end = range
-        if end < start:
-            raise MalformedInput(f"Range end cannot be less than range start")
-        stmt = stmt.offset(start).limit(end - start)
 
     if filter:
         for field, value in filter.items():
@@ -69,18 +66,22 @@ async def get_products(
                 else:
                     stmt = stmt.where(filter_column == value)
 
-    if not show_deleted:
-        stmt = stmt.where(Product.deleted_at.is_(None))
+    # calculate total before range is applied
+    if range or filter:
+        total = await db_session.scalar(select(func.count()).select_from(stmt))
+    else:
+        total = 0
+
+    if range:
+        start, end = range
+        if end < start:
+            raise MalformedInput(f"Range end cannot be less than range start")
+        stmt = stmt.offset(start).limit(end - start)
 
     products = (await db_session.scalars(stmt)).all()
 
     if not products:
         raise ProductsNotFound()
-
-    if range or filter:
-        total = await db_session.scalar(select(func.count()).select_from(stmt))
-    else:
-        total = 0
 
     return products, total
 
