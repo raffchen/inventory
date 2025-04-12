@@ -77,8 +77,8 @@ async def get_products(
     if not products:
         raise ProductsNotFound()
 
-    if range:
-        total = await db_session.scalar(select(func.count()).select_from(Product))
+    if range or filter:
+        total = await db_session.scalar(select(func.count()).select_from(stmt))
     else:
         total = 0
 

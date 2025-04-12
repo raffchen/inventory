@@ -40,7 +40,9 @@ async def read_products(
         raise HTTPException(status_code=400, detail=str(e))
 
     if range:
-        response.headers["Content-Range"] = f"items {range[0]}-{range[1] - 1}/{total}"
+        response.headers["Content-Range"] = (
+            f"items {range[0]}-{range[0] + len(products) - 1}/{total}"
+        )
 
     return products
 
