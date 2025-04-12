@@ -39,7 +39,7 @@ async def read_products(
 
     if range:
         response.headers["Content-Range"] = (
-            f"items {range[0]}-{int(total == 0) + range[0] + len(products) - 1}/{total}"
+            f"items {range[0]}-{range[0] + len(products) - 1}/{total}"
         )
 
     return products
