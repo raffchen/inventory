@@ -1,17 +1,21 @@
-from app.dependencies.core import DBSessionDep
+from typing import Annotated, Any
+
 from app.crud import inventory
+from app.dependencies.core import DBSessionDep
+from app.dependencies.exceptions import (
+    ProductAlreadyExists,
+    ProductNotFound,
+    ProductsNotFound,
+    MalformedInput,
+)
 from app.schemas.inventory import (
     ProductCreate,
     ProductRead,
     ProductReadFull,
     ProductUpdate,
 )
-from app.dependencies.exceptions import (
-    ProductsNotFound,
-    ProductNotFound,
-    ProductAlreadyExists,
-)
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
+from pydantic.types import Json
 
 router = APIRouter(
     prefix="/api/inventory",
@@ -20,17 +24,24 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[ProductRead])
-async def read_products(db_session: DBSessionDep):
+@router.get("/products", response_model=list[ProductRead])
+async def read_products(
+    db_session: DBSessionDep,
+    sort: Annotated[Json[list[str]] | None, Query(min_length=2, max_length=2)] = None,
+    range: Annotated[Json[list[int]] | None, Query(min_length=2, max_length=2)] = None,
+    filter: Annotated[Json[dict[str, Any]] | None, Query()] = None,
+):
     try:
-        products = await inventory.get_products(db_session)
+        products = await inventory.get_products(db_session, sort, range, filter)
     except ProductsNotFound as e:
         return []
+    except MalformedInput as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     return products
 
 
-@router.get("/all", response_model=list[ProductReadFull])
+@router.get("/products/all", response_model=list[ProductReadFull])
 async def read_all_products(db_session: DBSessionDep):
     try:
         products = await inventory.get_products(db_session, show_deleted=True)
@@ -40,7 +51,7 @@ async def read_all_products(db_session: DBSessionDep):
     return products
 
 
-@router.get("/{product_id}", response_model=ProductRead)
+@router.get("/products/{product_id}", response_model=ProductRead)
 async def read_product(db_session: DBSessionDep, product_id: int):
     try:
         product = await inventory.get_product(db_session, product_id)
@@ -50,7 +61,7 @@ async def read_product(db_session: DBSessionDep, product_id: int):
     return product
 
 
-@router.post("/", response_model=ProductRead)
+@router.post("/products", response_model=ProductRead)
 async def create_product(db_session: DBSessionDep, product: ProductCreate):
     product = ProductCreate.model_validate(product)
 
@@ -62,7 +73,7 @@ async def create_product(db_session: DBSessionDep, product: ProductCreate):
     return product
 
 
-@router.put("/{product_id}", response_model=ProductRead)
+@router.put("/products/{product_id}", response_model=ProductRead)
 async def update_product(
     db_session: DBSessionDep, product_id: int, update_data: ProductUpdate
 ):
@@ -76,7 +87,7 @@ async def update_product(
     return product
 
 
-@router.delete("/{product_id}")
+@router.delete("/products/{product_id}")
 async def delete_product(db_session: DBSessionDep, product_id: int):
     try:
         message = await inventory.delete_product(db_session, product_id)

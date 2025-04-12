@@ -4,19 +4,73 @@ from app.dependencies.exceptions import (
     ProductAlreadyExists,
     ProductNotFound,
     ProductsNotFound,
+    MalformedInput,
 )
 from app.models import ProductHistory, Product, UpdateField, UpdateType
 from app.schemas import ProductCreate, ProductUpdate
-from sqlalchemy import select, update
+from sqlalchemy import select, update, desc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_products(db_session: AsyncSession, show_deleted: bool = False):
-    if show_deleted:
-        stmt = select(Product).order_by(Product.id)
+async def get_products(
+    db_session: AsyncSession,
+    sort: list[str, str] = None,
+    range: list[int, int] = None,
+    filter: dict = None,
+    show_deleted: bool = False,
+):
+    stmt = select(Product)
+
+    if sort:
+        field, direction = sort
+        sort_column = getattr(Product, field, None)
+        if not sort_column:
+            raise MalformedInput(
+                f"Requested sort on field {field} but field doesn't exist"
+            )
+
+        if direction == "ASC":
+            stmt = stmt.order_by(field)
+        elif direction == "DESC":
+            stmt = stmt.order_by(desc(field))
+        else:
+            raise MalformedInput(f"Requested sort direction {direction} doesn't exist")
     else:
-        stmt = select(Product).where(Product.deleted_at.is_(None)).order_by(Product.id)
+        stmt = stmt.order_by(Product.id)
+
+    if range:
+        start, end = range
+        if end < start:
+            raise MalformedInput(f"Range end cannot be less than range start")
+        stmt = stmt.offset(start).limit(end - start)
+
+    if filter:
+        for field, value in filter.items():
+            if field == "id":
+                if isinstance(value, int):
+                    stmt = stmt.where(Product.id == value)
+                elif isinstance(value, list) and all(isinstance(i, int) for i in value):
+                    stmt = stmt.where(Product.id.in_(value))
+                else:
+                    raise MalformedInput(f"Id filter must be int or list of ints")
+            else:
+                # TODO: handle custom filters e.g. {"show_deleted": true}
+                # TODO: handle if value type doesn't match field e.g. {"name": 2}
+                # TODO: handle fuzzy matching e.g. {"name": "cha"} searches for *cha*
+                # TODO: once table fields are finalized, can turn this into a match statement
+                filter_column = getattr(Product, field, None)
+                if not filter_column:
+                    raise MalformedInput(
+                        f"Requested filter on field {field} but field doesn't exist"
+                    )
+                if isinstance(value, str):
+                    stmt = stmt.where(filter_column.ilike(f"%{value}%"))
+                else:
+                    stmt = stmt.where(filter_column == value)
+
+    if not show_deleted:
+        stmt = stmt.where(Product.deleted_at.is_(None))
 
     products = (await db_session.scalars(stmt)).all()
 

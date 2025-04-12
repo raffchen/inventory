@@ -21,7 +21,7 @@ async def test_get_products_empty():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/inventory/")
+        resp = await client.get("/api/inventory/products")
 
         assert resp.status_code == 200
         assert len(resp.json()) == 0
@@ -32,7 +32,7 @@ async def test_get_product_not_exist():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        resp = await client.get("/api/inventory/1")
+        resp = await client.get("/api/inventory/products/1")
 
         assert resp.status_code == 404
 
@@ -49,12 +49,12 @@ async def test_create_one_product():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        post_resp = await client.post("/api/inventory/", json=product_data)
+        post_resp = await client.post("/api/inventory/products", json=product_data)
 
         assert post_resp.status_code == 200
 
         # test that product shows up in list of all products
-        get_resp = await client.get("/api/inventory/")
+        get_resp = await client.get("/api/inventory/products")
 
         assert get_resp.status_code == 200
 
@@ -64,7 +64,7 @@ async def test_create_one_product():
         assert compare_returned_json(ret[0], product_data)
 
         # test that product gets its own endpoint
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
 
         assert get_resp.status_code == 200
         assert compare_returned_json(get_resp.json(), product_data)
@@ -88,14 +88,14 @@ async def test_create_multiple_products():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        post_resp1 = await client.post("/api/inventory/", json=product_data1)
-        post_resp2 = await client.post("/api/inventory/", json=product_data2)
+        post_resp1 = await client.post("/api/inventory/products", json=product_data1)
+        post_resp2 = await client.post("/api/inventory/products", json=product_data2)
 
         assert post_resp1.status_code == 200
         assert post_resp2.status_code == 200
 
         # test that all products show up
-        get_resp = await client.get("/api/inventory/")
+        get_resp = await client.get("/api/inventory/products")
         ret = get_resp.json()
 
         assert len(ret) == 2
@@ -105,12 +105,12 @@ async def test_create_multiple_products():
         assert compare_returned_json(ret[1], product_data2)
 
         # test that each product gets its own endpoint
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
 
         assert get_resp.status_code == 200
         assert compare_returned_json(get_resp.json(), product_data1)
 
-        get_resp = await client.get("/api/inventory/2")
+        get_resp = await client.get("/api/inventory/products/2")
 
         assert get_resp.status_code == 200
         assert compare_returned_json(get_resp.json(), product_data2)
@@ -134,19 +134,19 @@ async def test_create_products_with_same_id():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data1)
-        post_resp = await client.post("/api/inventory/", json=product_data2)
+        await client.post("/api/inventory/products", json=product_data1)
+        post_resp = await client.post("/api/inventory/products", json=product_data2)
 
         assert post_resp.status_code == 400
 
         # make sure original data is still there
-        get_resp = await client.get("/api/inventory/")
+        get_resp = await client.get("/api/inventory/products")
         ret = get_resp.json()
 
         assert len(ret) == 1
         assert compare_returned_json(ret[0], product_data1)
 
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
 
         assert get_resp.status_code == 200
         assert compare_returned_json(get_resp.json(), product_data1)
@@ -171,13 +171,13 @@ async def test_update_product():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data)
+        await client.post("/api/inventory/products", json=product_data)
 
-        put_resp = await client.put("/api/inventory/1", json=update_data)
+        put_resp = await client.put("/api/inventory/products/1", json=update_data)
 
         assert put_resp.status_code == 200
 
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
         ret = get_resp.json()
 
         # check that updated_at is newer
@@ -204,7 +204,7 @@ async def test_update_product_not_exist():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        put_resp = await client.put("/api/inventory/1", json=update_data)
+        put_resp = await client.put("/api/inventory/products/1", json=update_data)
 
         assert put_resp.status_code == 400
 
@@ -221,30 +221,30 @@ async def test_delete_product():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data)
+        await client.post("/api/inventory/products", json=product_data)
 
         # product shows up in list of all products
-        get_resp = await client.get("/api/inventory/")
+        get_resp = await client.get("/api/inventory/products")
 
         assert len(get_resp.json()) == 1
 
         # product endpoint exists
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
 
         assert get_resp.status_code == 200
 
         # delete
-        delete_resp = await client.delete("/api/inventory/1")
+        delete_resp = await client.delete("/api/inventory/products/1")
 
         assert delete_resp.status_code == 200
 
         # product doesn't show up in list of all products
-        get_resp = await client.get("/api/inventory/")
+        get_resp = await client.get("/api/inventory/products")
 
         assert len(get_resp.json()) == 0
 
         # product endpoint doesn't exist
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
 
         assert get_resp.status_code == 404
 
@@ -254,7 +254,7 @@ async def test_delete_product_not_exists():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        delete_resp = await client.delete("/api/inventory/1")
+        delete_resp = await client.delete("/api/inventory/products/1")
 
         assert delete_resp.status_code == 404
 
@@ -277,21 +277,21 @@ async def test_delete_product_then_create_product_with_same_id():
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data1)
-        await client.delete("/api/inventory/1")
+        await client.post("/api/inventory/products", json=product_data1)
+        await client.delete("/api/inventory/products/1")
 
-        post_resp = await client.post("/api/inventory/", json=product_data2)
+        post_resp = await client.post("/api/inventory/products", json=product_data2)
 
         assert post_resp.status_code == 200
 
-        get_resp = await client.get("/api/inventory/")
+        get_resp = await client.get("/api/inventory/products")
         ret = get_resp.json()
 
         assert len(ret) == 1
         assert compare_returned_json(ret[0], product_data2)
 
         # test that product gets its own endpoint
-        get_resp = await client.get("/api/inventory/1")
+        get_resp = await client.get("/api/inventory/products/1")
 
         assert get_resp.status_code == 200
         assert compare_returned_json(get_resp.json(), product_data2)
@@ -309,10 +309,10 @@ async def test_can_see_deleted_products_with_all_endpoint():
             "quantity": 5,
         }
 
-        await client.post("/api/inventory/", json=product_data)
-        await client.delete("/api/inventory/1")
+        await client.post("/api/inventory/products", json=product_data)
+        await client.delete("/api/inventory/products/1")
 
-        get_resp = await client.get("/api/inventory/all")
+        get_resp = await client.get("/api/inventory/products/all")
 
         assert get_resp.status_code == 200
 

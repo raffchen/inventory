@@ -17,7 +17,7 @@ async def test_create_product_history(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data)
+        await client.post("/api/inventory/products", json=product_data)
 
     history_list = (await test_db_session.scalars(select(ProductHistory))).all()
 
@@ -54,8 +54,8 @@ async def test_update_product_history(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data)
-        await client.put("/api/inventory/1", json=update_data)
+        await client.post("/api/inventory/products", json=product_data)
+        await client.put("/api/inventory/products/1", json=update_data)
 
     history_list = (
         await test_db_session.scalars(
@@ -95,8 +95,8 @@ async def test_delete_product_history(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data)
-        await client.delete("/api/inventory/1")
+        await client.post("/api/inventory/products", json=product_data)
+        await client.delete("/api/inventory/products/1")
 
     history_list = (
         await test_db_session.scalars(
@@ -132,9 +132,9 @@ async def test_delete_then_create_product_history(test_db_session):
     async with AsyncClient(
         transport=ASGITransport(app=main_app), base_url="http://test"
     ) as client:
-        await client.post("/api/inventory/", json=product_data1)
-        await client.delete("/api/inventory/1")
-        await client.post("/api/inventory/", json=product_data2)
+        await client.post("/api/inventory/products", json=product_data1)
+        await client.delete("/api/inventory/products/1")
+        await client.post("/api/inventory/products", json=product_data2)
 
     history_list = (
         await test_db_session.scalars(

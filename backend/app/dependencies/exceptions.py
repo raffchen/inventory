@@ -5,11 +5,14 @@ class ProductsNotFound(Exception):
 
 class ProductNotFound(Exception):
     def __init__(self, product_id: int):
-        self.product_id = product_id
         super().__init__(f"Product with ID {product_id} not found")
 
 
 class ProductAlreadyExists(Exception):
     def __init__(self, product_id: int):
-        self.product_id = product_id
         super().__init__(f"Product with ID {product_id} already exists")
+
+
+class MalformedInput(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
