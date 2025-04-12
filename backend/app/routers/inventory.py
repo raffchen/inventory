@@ -3,10 +3,10 @@ from typing import Annotated, Any
 from app.crud import inventory
 from app.dependencies.core import DBSessionDep
 from app.dependencies.exceptions import (
+    MalformedInput,
     ProductAlreadyExists,
     ProductNotFound,
     ProductsNotFound,
-    MalformedInput,
 )
 from app.schemas.inventory import (
     ProductCreate,
@@ -14,7 +14,7 @@ from app.schemas.inventory import (
     ProductReadFull,
     ProductUpdate,
 )
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic.types import Json
 
 router = APIRouter(
@@ -27,16 +27,20 @@ router = APIRouter(
 @router.get("/products", response_model=list[ProductRead])
 async def read_products(
     db_session: DBSessionDep,
+    response: Response,
     sort: Annotated[Json[list[str]] | None, Query(min_length=2, max_length=2)] = None,
     range: Annotated[Json[list[int]] | None, Query(min_length=2, max_length=2)] = None,
     filter: Annotated[Json[dict[str, Any]] | None, Query()] = None,
 ):
     try:
-        products = await inventory.get_products(db_session, sort, range, filter)
+        products, total = await inventory.get_products(db_session, sort, range, filter)
     except ProductsNotFound as e:
         return []
     except MalformedInput as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    if range:
+        response.headers["Content-Range"] = f"items {range[0]}-{range[1] - 1}/{total}"
 
     return products
 
@@ -44,7 +48,7 @@ async def read_products(
 @router.get("/products/all", response_model=list[ProductReadFull])
 async def read_all_products(db_session: DBSessionDep):
     try:
-        products = await inventory.get_products(db_session, show_deleted=True)
+        products, total = await inventory.get_products(db_session, show_deleted=True)
     except ProductsNotFound as e:
         return []
 

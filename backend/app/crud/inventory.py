@@ -1,14 +1,14 @@
 from datetime import datetime, timezone
 
 from app.dependencies.exceptions import (
+    MalformedInput,
     ProductAlreadyExists,
     ProductNotFound,
     ProductsNotFound,
-    MalformedInput,
 )
-from app.models import ProductHistory, Product, UpdateField, UpdateType
+from app.models import Product, ProductHistory, UpdateField, UpdateType
 from app.schemas import ProductCreate, ProductUpdate
-from sqlalchemy import select, update, desc
+from sqlalchemy import desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -77,7 +77,12 @@ async def get_products(
     if not products:
         raise ProductsNotFound()
 
-    return products
+    if range:
+        total = await db_session.scalar(select(func.count()).select_from(Product))
+    else:
+        total = 0
+
+    return products, total
 
 
 async def get_product(db_session: AsyncSession, product_id: int):
