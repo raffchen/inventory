@@ -4,6 +4,8 @@ import pytest
 from app.main import app as main_app
 from httpx import ASGITransport, AsyncClient
 
+# TODO: add tests for sort, range, and filter query parameters
+
 
 def compare_returned_json(
     resp_dict: dict,
