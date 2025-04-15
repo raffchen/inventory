@@ -5,28 +5,28 @@ from app.dependencies.exceptions import (
     ProductAlreadyExists,
     ProductNotFound,
 )
-from app.models import Product, ProductHistory, UpdateField, UpdateType
-from app.schemas import ProductCreate, ProductUpdate
+from app.models import Lenses, LensesHistory, UpdateField, UpdateType
+from app.schemas import LensCreate, LensUpdate
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def get_products(
+async def get_lenses(
     db_session: AsyncSession,
     sort: list[str, str] = None,
     range: list[int, int] = None,
     filter: dict = None,
     show_deleted: bool = False,
 ):
-    stmt = select(Product)
+    stmt = select(Lenses)
 
     if not show_deleted:
-        stmt = stmt.where(Product.deleted_at.is_(None))
+        stmt = stmt.where(Lenses.deleted_at.is_(None))
 
     if sort:
         field, direction = sort
-        sort_column = getattr(Product, field, None)
+        sort_column = getattr(Lenses, field, None)
         if not sort_column:
             raise MalformedInput(
                 f"Requested sort on field {field} but field doesn't exist"
@@ -39,15 +39,15 @@ async def get_products(
         else:
             raise MalformedInput(f"Requested sort direction {direction} doesn't exist")
     else:
-        stmt = stmt.order_by(Product.id)
+        stmt = stmt.order_by(Lenses.id)
 
     if filter:
         for field, value in filter.items():
             if field == "id":
                 if isinstance(value, int):
-                    stmt = stmt.where(Product.id == value)
+                    stmt = stmt.where(Lenses.id == value)
                 elif isinstance(value, list) and all(isinstance(i, int) for i in value):
-                    stmt = stmt.where(Product.id.in_(value))
+                    stmt = stmt.where(Lenses.id.in_(value))
                 else:
                     raise MalformedInput(f"Id filter must be int or list of ints")
             else:
@@ -55,7 +55,7 @@ async def get_products(
                 # TODO: handle if value type doesn't match field e.g. {"name": 2}
                 # TODO: handle fuzzy matching e.g. {"name": "cha"} searches for *cha*
                 # TODO: once table fields are finalized, can turn this into a match statement
-                filter_column = getattr(Product, field, None)
+                filter_column = getattr(Lenses, field, None)
                 if not filter_column:
                     raise MalformedInput(
                         f"Requested filter on field {field} but field doesn't exist"
@@ -76,41 +76,41 @@ async def get_products(
             raise MalformedInput(f"Range end cannot be less than range start")
         stmt = stmt.offset(start).limit(end - start)
 
-    products = (await db_session.scalars(stmt)).all()
+    lenses = (await db_session.scalars(stmt)).all()
 
-    if not products:
+    if not lenses:
         # if range is out of bounds, we need to set total back to 0
         total = 0
 
-    return products, total
+    return lenses, total
 
 
-async def get_product(db_session: AsyncSession, product_id: int):
-    product = (
+async def get_lens(db_session: AsyncSession, lens_id: int):
+    lens = (
         await db_session.scalars(
-            select(Product)
-            .where(Product.id == product_id)
-            .where(Product.deleted_at.is_(None))
+            select(Lenses)
+            .where(Lenses.id == lens_id)
+            .where(Lenses.deleted_at.is_(None))
         )
     ).first()
 
-    if not product:
-        raise ProductNotFound(product_id)
+    if not lens:
+        raise ProductNotFound(lens_id)
 
-    return product
+    return lens
 
 
-async def create_product(db_session: AsyncSession, product: ProductCreate):
+async def create_lens(db_session: AsyncSession, lens: LensCreate):
     # TODO: allow update_source
     try:
-        new_product = Product(**product.model_dump(exclude_unset=True))
-        db_session.add(new_product)
+        new_lens = Lenses(**lens.model_dump(exclude_unset=True))
+        db_session.add(new_lens)
 
         await db_session.flush()
 
         history_entries = [
-            ProductHistory(
-                product_id=new_product.id,
+            LensesHistory(
+                lens_id=new_lens.id,
                 update_field=field,
                 old_value=None,
                 new_value=str(value),
@@ -118,31 +118,48 @@ async def create_product(db_session: AsyncSession, product: ProductCreate):
             )
             for value, field in zip(
                 [
-                    new_product.name,
-                    new_product.description,
-                    new_product.quantity,
+                    new_lens.lens_type,
+                    new_lens.sphere,
+                    new_lens.cylinder,
+                    new_lens.unit_price,
+                    new_lens.quantity,
+                    new_lens.storage_limit,
+                    new_lens.comment,
                 ],
-                [UpdateField.NAME, UpdateField.DESCRIPTION, UpdateField.QUANTITY],
+                [
+                    UpdateField.LENS_TYPE,
+                    UpdateField.SPHERE,
+                    UpdateField.CYLINDER,
+                    UpdateField.UNIT_PRICE,
+                    UpdateField.QUANTITY,
+                    UpdateField.STORAGE_LIMIT,
+                    UpdateField.COMMENT,
+                ],
             )
         ]
         db_session.add_all(history_entries)
 
         await db_session.commit()
-        await db_session.refresh(new_product)
+        await db_session.refresh(new_lens)
 
-        return new_product
+        return new_lens
+    except IntegrityError as e:
+        await db_session.rollback()
+        raise ProductAlreadyExists(f"Lens with id {lens.id} already exists")
     except Exception as e:
         await db_session.rollback()
         raise RuntimeError(f"Database error {type(e)}: {e}")
 
 
-async def replace_product(
-    db_session: AsyncSession, product: Product, update_data: ProductCreate
-):
+async def replace_lens(db_session: AsyncSession, lens: Lenses, update_data: LensCreate):
     get_field: dict[str, UpdateField] = {
-        "name": UpdateField.NAME,
-        "description": UpdateField.DESCRIPTION,
+        "lens_type": UpdateField.LENS_TYPE,
+        "sphere": UpdateField.SPHERE,
+        "cylinder": UpdateField.CYLINDER,
+        "unit_price": UpdateField.UNIT_PRICE,
         "quantity": UpdateField.QUANTITY,
+        "storage_limit": UpdateField.STORAGE_LIMIT,
+        "comment": UpdateField.COMMENT,
     }
 
     update_dict = update_data.model_dump(exclude_unset=True)
@@ -151,11 +168,11 @@ async def replace_product(
     history_entries = []
 
     for key, value in update_dict.items():
-        if (old_val := getattr(product, key)) != value:
-            setattr(product, key, value)
+        if (old_val := getattr(lens, key)) != value:
+            setattr(lens, key, value)
         history_entries.append(
-            ProductHistory(
-                product_id=product.id,
+            LensesHistory(
+                lens_id=lens.id,
                 update_field=get_field[key],
                 old_value=str(old_val),
                 new_value=str(value),
@@ -164,63 +181,65 @@ async def replace_product(
         )
 
     history_entries.append(
-        ProductHistory(
-            product_id=product.id,
+        LensesHistory(
+            lens_id=lens.id,
             update_field=UpdateField.DELETED_AT,
-            old_value=str(product.deleted_at),
+            old_value=str(lens.deleted_at),
             new_value=None,
             update_type=UpdateType.CREATE,
         )
     )
 
-    product.updated_at = datetime.now(timezone.utc)
-    product.deleted_at = None
+    lens.updated_at = datetime.now(timezone.utc)
+    lens.deleted_at = None
 
     db_session.add_all(history_entries)
 
     try:
         await db_session.commit()
-        await db_session.refresh(product)
+        await db_session.refresh(lens)
 
-        return product
+        return lens
     except Exception as e:
         await db_session.rollback()
         raise RuntimeError(f"Database error {type(e)}: {e}")
 
 
-async def create_or_replace_product(db_session: AsyncSession, product: ProductCreate):
+async def create_or_replace_lens(db_session: AsyncSession, lens: LensCreate):
     check = (
-        await db_session.execute(select(Product).where(Product.id == product.id))
+        await db_session.execute(select(Lenses).where(Lenses.id == lens.id))
     ).scalar_one_or_none()
 
     if check:
         if check.deleted_at is None:
-            raise ProductAlreadyExists(product.id)
+            raise ProductAlreadyExists(lens.id)
         else:
-            return await replace_product(db_session, check, product)
+            return await replace_lens(db_session, check, lens)
 
-    return await create_product(db_session, product)
+    return await create_lens(db_session, lens)
 
 
-async def update_product(
-    db_session: AsyncSession, product_id: int, update_data: ProductUpdate
-):
+async def update_lens(db_session: AsyncSession, lens_id: int, update_data: LensUpdate):
     get_field: dict[str, UpdateField] = {
-        "name": UpdateField.NAME,
-        "description": UpdateField.DESCRIPTION,
+        "lens_type": UpdateField.LENS_TYPE,
+        "sphere": UpdateField.SPHERE,
+        "cylinder": UpdateField.CYLINDER,
+        "unit_price": UpdateField.UNIT_PRICE,
         "quantity": UpdateField.QUANTITY,
+        "storage_limit": UpdateField.STORAGE_LIMIT,
+        "comment": UpdateField.COMMENT,
     }
 
-    product = (
+    lens = (
         await db_session.execute(
-            select(Product)
-            .where(Product.id == product_id)
-            .where(Product.deleted_at.is_(None))
+            select(Lenses)
+            .where(Lenses.id == lens_id)
+            .where(Lenses.deleted_at.is_(None))
         )
     ).scalar_one_or_none()
 
-    if not product:
-        raise ProductNotFound(product_id)
+    if not lens:
+        raise ProductNotFound(lens_id)
 
     update_dict = update_data.model_dump(exclude_unset=True)
 
@@ -231,13 +250,14 @@ async def update_product(
 
     for key, value in update_dict.items():
         if key in ["update_notes", "update_source"]:
+            # TODO: handle these values
             continue
 
-        if (old_val := getattr(product, key)) != value:
-            setattr(product, key, value)
+        if (old_val := getattr(lens, key)) != value:
+            setattr(lens, key, value)
             history_entries.append(
-                ProductHistory(
-                    product_id=product_id,
+                LensesHistory(
+                    lens_id=lens_id,
                     update_field=get_field[key],
                     old_value=str(old_val),
                     new_value=str(value),
@@ -247,42 +267,40 @@ async def update_product(
                 )
             )
 
-    product.updated_at = datetime.now(timezone.utc)
+    lens.updated_at = datetime.now(timezone.utc)
     db_session.add_all(history_entries)
 
     try:
         await db_session.commit()
-        await db_session.refresh(product)
+        await db_session.refresh(lens)
 
-        return product
+        return lens
     except Exception as e:
         await db_session.rollback()
         raise RuntimeError(f"Database error {type(e)}: {e}")
 
 
-async def delete_product(db_session: AsyncSession, product_id: int):
-    product = (
+async def delete_lens(db_session: AsyncSession, lens_id: int):
+    lens = (
         await db_session.execute(
-            select(Product)
-            .where(Product.id == product_id)
-            .where(Product.deleted_at.is_(None))
+            select(Lenses)
+            .where(Lenses.id == lens_id)
+            .where(Lenses.deleted_at.is_(None))
         )
     ).scalar_one_or_none()
 
-    if not product:
-        raise ProductNotFound(product_id)
+    if not lens:
+        raise ProductNotFound(lens_id)
 
     try:
         utc_now = datetime.now(timezone.utc)
 
-        stmt = (
-            update(Product).where(Product.id == product_id).values(deleted_at=utc_now)
-        )
+        stmt = update(Lenses).where(Lenses.id == lens_id).values(deleted_at=utc_now)
         await db_session.execute(stmt)
 
         db_session.add(
-            ProductHistory(
-                product_id=product_id,
+            LensesHistory(
+                lens_id=lens_id,
                 update_field=UpdateField.DELETED_AT,
                 old_value=None,
                 new_value=str(utc_now),
@@ -292,7 +310,7 @@ async def delete_product(db_session: AsyncSession, product_id: int):
 
         await db_session.commit()
 
-        return {"message": f"Product with ID {product_id} deleted successfully"}
+        return {"message": f"Lens with ID {lens_id} deleted successfully"}
     except Exception as e:
         await db_session.rollback()
         raise RuntimeError(f"Database error {type(e)}: {e}")

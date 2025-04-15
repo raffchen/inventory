@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from app.crud import inventory
+from app.crud import lenses
 from app.dependencies.core import DBSessionDep
 from app.dependencies.exceptions import (
     MalformedInput,
@@ -8,12 +8,7 @@ from app.dependencies.exceptions import (
     ProductNotFound,
     ProductsNotFound,
 )
-from app.schemas.inventory import (
-    ProductCreate,
-    ProductRead,
-    ProductReadFull,
-    ProductUpdate,
-)
+from app.schemas.lenses import LensCreate, LensRead, LensUpdate
 from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic.types import Json
 
@@ -24,8 +19,8 @@ router = APIRouter(
 )
 
 
-@router.get("/products", response_model=list[ProductRead])
-async def read_products(
+@router.get("/lenses", response_model=list[LensRead])
+async def read_lenses(
     db_session: DBSessionDep,
     response: Response,
     sort: Annotated[Json[list[str]] | None, Query(min_length=2, max_length=2)] = None,
@@ -33,7 +28,7 @@ async def read_products(
     filter: Annotated[Json[dict[str, Any]] | None, Query()] = None,
 ):
     try:
-        products, total = await inventory.get_products(db_session, sort, range, filter)
+        products, total = await lenses.get_lenses(db_session, sort, range, filter)
     except MalformedInput as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -45,57 +40,53 @@ async def read_products(
     return products
 
 
-@router.get("/products/all", response_model=list[ProductReadFull])
+@router.get("/lenses/all", response_model=list[LensRead])
 # TODO: update to match /products
 async def read_all_products(db_session: DBSessionDep):
     try:
-        products, total = await inventory.get_products(db_session, show_deleted=True)
+        products, total = await lenses.get_lenses(db_session, show_deleted=True)
     except ProductsNotFound as e:
         return []
 
     return products
 
 
-@router.get("/products/{product_id}", response_model=ProductRead)
+@router.get("/lenses/{product_id}", response_model=LensRead)
 async def read_product(db_session: DBSessionDep, product_id: int):
     try:
-        product = await inventory.get_product(db_session, product_id)
+        product = await lenses.get_lens(db_session, product_id)
     except ProductNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
     return product
 
 
-@router.post("/products", response_model=ProductRead)
-async def create_product(db_session: DBSessionDep, product: ProductCreate):
-    product = ProductCreate.model_validate(product)
-
+@router.post("/lenses", response_model=LensRead)
+async def create_product(db_session: DBSessionDep, product: LensCreate):
     try:
-        product = await inventory.create_or_replace_product(db_session, product)
+        product = await lenses.create_or_replace_lens(db_session, product)
     except ProductAlreadyExists as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return product
 
 
-@router.put("/products/{product_id}", response_model=ProductRead)
+@router.put("/lenses/{product_id}", response_model=LensRead)
 async def update_product(
-    db_session: DBSessionDep, product_id: int, update_data: ProductUpdate
+    db_session: DBSessionDep, product_id: int, update_data: LensUpdate
 ):
-    product = ProductUpdate.model_validate(update_data)
-
     try:
-        product = await inventory.update_product(db_session, product_id, update_data)
+        product = await lenses.update_lens(db_session, product_id, update_data)
     except ProductNotFound as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return product
 
 
-@router.delete("/products/{product_id}")
+@router.delete("/lenses/{product_id}")
 async def delete_product(db_session: DBSessionDep, product_id: int):
     try:
-        message = await inventory.delete_product(db_session, product_id)
+        message = await lenses.delete_lens(db_session, product_id)
     except ProductNotFound as e:
         raise HTTPException(status_code=404, detail=str(e))
 
