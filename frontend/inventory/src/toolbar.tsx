@@ -1,9 +1,8 @@
-import { Toolbar, SaveButton } from "react-admin";
-import { DeleteWithConfirm } from "./button";
+import { DeleteButton, Toolbar, SaveButton } from "react-admin";
 
 export const CustomEditToolbar = () => (
   <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
     <SaveButton />
-    <DeleteWithConfirm />
+    <DeleteButton mutationMode="pessimistic" />
   </Toolbar>
 );
