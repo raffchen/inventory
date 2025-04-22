@@ -13,6 +13,7 @@ import {
   TextField,
   TextInput,
 } from "react-admin";
+import { CustomEditToolbar } from "./toolbar";
 
 export const LensList = () => (
   <List>
@@ -29,14 +30,14 @@ export const LensList = () => (
         render={(record) => {
           if (record.comment?.length > 0)
             return (
-              record.comment?.slice(0, 25) +
-              (record.comment?.length > 25 ? "…" : "")
+              record.comment?.slice(0, 30) +
+              (record.comment?.length > 30 ? "…" : "")
             );
           else return "";
         }}
       />
-      <DateField source="created_at" />
-      <DateField source="updated_at" />
+      <DateField source="created_at" showTime />
+      <DateField source="updated_at" showTime />
     </Datagrid>
   </List>
 );
@@ -52,9 +53,8 @@ export const LensShow = () => (
       <NumberField source="quantity" />
       <NumberField source="storage_limit" />
       <TextField source="comment" />
-      <DateField source="created_at" showTime={true} />
-      <DateField source="updated_at" showTime={true} />
-      <DateField source="deleted_at" showTime={true} />
+      <DateField source="created_at" showTime />
+      <DateField source="updated_at" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -71,7 +71,7 @@ export const LensEdit = () => {
   });
   return (
     <Edit transform={transform}>
-      <SimpleForm>
+      <SimpleForm toolbar={<CustomEditToolbar />}>
         <TextInput source="id" InputProps={{ disabled: true }} />
         <TextInput source="lens_type" />
         <NumberInput source="sphere" />
@@ -82,7 +82,6 @@ export const LensEdit = () => {
         <TextInput source="comment" multiline />
         <DateTimeInput source="created_at" InputProps={{ disabled: true }} />
         <DateTimeInput source="updated_at" InputProps={{ disabled: true }} />
-        <DateTimeInput source="deleted_at" InputProps={{ disabled: true }} />
       </SimpleForm>
     </Edit>
   );
