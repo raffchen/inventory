@@ -1,4 +1,5 @@
 import {
+  Create,
   Datagrid,
   DateField,
   DateTimeInput,
@@ -84,5 +85,22 @@ export const LensEdit = () => {
         <DateTimeInput source="updated_at" InputProps={{ disabled: true }} />
       </SimpleForm>
     </Edit>
+  );
+};
+
+export const LensCreate = () => {
+  return (
+    <Create>
+      <SimpleForm>
+        <TextInput source="id" />
+        <TextInput source="lens_type" />
+        <NumberInput source="sphere" />
+        <NumberInput source="cylinder" />
+        <NumberInput source="unit_price" />
+        <NumberInput source="quantity" />
+        <NumberInput source="storage_limit" />
+        <TextInput source="comment" multiline />
+      </SimpleForm>
+    </Create>
   );
 };
