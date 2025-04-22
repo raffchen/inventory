@@ -83,6 +83,7 @@ test_data = [
         "unit_price": 80.00,
         "storage_limit": 25,
         "quantity": 10,
+        "comment": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
     },
     {
         "id": 10,
@@ -98,11 +99,10 @@ test_data = [
 
 async def send_requests():
     async with AsyncClient() as client:
-        tasks = [
-            client.post("http://localhost:8000/api/inventory/lenses", json=lens_data)
-            for lens_data in test_data
-        ]
-        await asyncio.gather(*tasks)
+        for lens_data in test_data:
+            await client.post(
+                "http://localhost:8000/api/inventory/lenses", json=lens_data
+            )
 
 
 if __name__ == "__main__":

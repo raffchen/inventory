@@ -50,6 +50,9 @@ class LensCreate(BaseModel):
 class LensUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
 
+    lens_type: str | None = None
+    sphere: Decimal | None = None
+    cylinder: Decimal | None = None
     unit_price: Decimal | None = None
     quantity: int | None = None
     storage_limit: int | None = None
