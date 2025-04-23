@@ -7,7 +7,7 @@ from app.dependencies.exceptions import (
 )
 from app.models import Lenses, LensesHistory, UpdateField, UpdateType
 from app.schemas import LensCreate, LensUpdate
-from sqlalchemy import desc, func, select, update
+from sqlalchemy import desc, func, select, update, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,7 +43,15 @@ async def get_lenses(
 
     if filter:
         for field, value in filter.items():
-            if field == "id":
+            if field == "q":
+                # search over all text fields
+                stmt = stmt.where(
+                    or_(
+                        Lenses.lens_type.ilike(f"%{value}%"),
+                        Lenses.comment.ilike(f"%{value}%"),
+                    )
+                )
+            elif field == "id":
                 if isinstance(value, int):
                     stmt = stmt.where(Lenses.id == value)
                 elif isinstance(value, list) and all(isinstance(i, int) for i in value):
@@ -51,9 +59,7 @@ async def get_lenses(
                 else:
                     raise MalformedInput(f"Id filter must be int or list of ints")
             else:
-                # TODO: handle custom filters e.g. {"show_deleted": true}
                 # TODO: handle if value type doesn't match field e.g. {"name": 2}
-                # TODO: handle fuzzy matching e.g. {"name": "cha"} searches for *cha*
                 # TODO: once table fields are finalized, can turn this into a match statement
                 filter_column = getattr(Lenses, field, None)
                 if not filter_column:
