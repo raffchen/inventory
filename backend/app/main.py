@@ -3,13 +3,13 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
-from app.config import settings
-from app.database import sessionmanager
-from app.models import Lenses
-from app.routers.inventory import router as inventory_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette_admin.contrib.sqla import Admin, ModelView
+
+from app.config import settings
+from app.database import sessionmanager
+from app.routers.inventory import router as inventory_router
+
 
 logging.basicConfig(stream=sys.stdout, level=settings.log_level)
 
@@ -29,9 +29,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(inventory_router)
 
-admin = Admin(sessionmanager._engine, title="Test")
-admin.add_view(ModelView(Lenses))
-admin.mount_to(app)
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Content-Range"],
+)
 
 
 @app.get("/")
