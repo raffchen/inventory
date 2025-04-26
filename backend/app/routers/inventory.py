@@ -33,9 +33,7 @@ async def read_lenses(
         raise HTTPException(status_code=400, detail=str(e))
 
     if range:
-        response.headers["Content-Range"] = (
-            f"items {range[0]}-{range[0] + len(products) - 1}/{total}"
-        )
+        response.headers["X-Total-Count"] = total
 
     return products
 
