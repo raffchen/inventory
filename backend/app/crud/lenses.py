@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 async def get_lenses(
     db_session: AsyncSession,
-    sort: list[str, str] = None,
-    range: list[int, int] = None,
+    sort: list[list[str]] = None,
+    range: list[int] = None,
     filter: dict = None,
     show_deleted: bool = False,
 ):
@@ -25,19 +25,21 @@ async def get_lenses(
         stmt = stmt.where(Lenses.deleted_at.is_(None))
 
     if sort:
-        field, direction = sort
-        sort_column = getattr(Lenses, field, None)
-        if not sort_column:
-            raise MalformedInput(
-                f"Requested sort on field {field} but field doesn't exist"
-            )
+        for field, direction in sort:
+            sort_column = getattr(Lenses, field, None)
+            if not sort_column:
+                raise MalformedInput(
+                    f"Requested sort on field {field} but field doesn't exist"
+                )
 
-        if direction == "ASC":
-            stmt = stmt.order_by(field)
-        elif direction == "DESC":
-            stmt = stmt.order_by(desc(field))
-        else:
-            raise MalformedInput(f"Requested sort direction {direction} doesn't exist")
+            if direction.lower() == "asc":
+                stmt = stmt.order_by(field)
+            elif direction.lower() == "desc":
+                stmt = stmt.order_by(desc(field))
+            else:
+                raise MalformedInput(
+                    f"Requested sort direction {direction} doesn't exist"
+                )
     else:
         stmt = stmt.order_by(Lenses.id)
 
