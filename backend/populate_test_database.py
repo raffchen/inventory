@@ -89,7 +89,7 @@ test_data = [
         "id": 10,
         "lens_type": "Trivex",
         "sphere": +1.75,
-        "cylinder": -1.00,
+        "cylinder": 2.00,
         "unit_price": 75.00,
         "storage_limit": 25,
         "quantity": 10,
