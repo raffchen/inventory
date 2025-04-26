@@ -286,7 +286,8 @@ async def replace_lens(db_session: AsyncSession, lens: Lenses, update_data: Lens
         )
     )
 
-    lens.updated_at = datetime.now(timezone.utc)
+    lens.created_at = datetime.now(timezone.utc)
+    lens.updated_at = None
     lens.deleted_at = None
 
     db_session.add_all(history_entries)
