@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Sequence
 
 from app.dependencies.exceptions import (
     MalformedInput,
@@ -13,7 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _process_filter(filter):
-    # if any exceptions occur, just let the query fail
     operator = filter["operator"]
     field = getattr(Lenses, filter["field"])
     value = filter["value"]
@@ -39,16 +39,24 @@ def _process_filter(filter):
         case "gte":
             return field >= value
         case "in":
+            if not isinstance(value, Sequence):
+                raise MalformedInput('filter operator "in" takes a sequence of values')
             return field in value
         case "nin":
+            if not isinstance(value, Sequence):
+                raise MalformedInput('filter operator "nin" takes a sequence of values')
             return not_(field in value)
         case "contains":
             return field.ilike(f"%{value}%")
         case "ncontains":
             return not_(field.ilike(f"%{value}%"))
         case "between":
+            if not isinstance(value, Sequence) or len(value) != 2:
+                raise MalformedInput('filter operator "between" takes 2 arguments')
             return and_(field >= value[0], field <= value[1])
         case "nbetween":
+            if not isinstance(value, Sequence) or len(value) != 2:
+                raise MalformedInput('filter operator "nbetween" takes 2 arguments')
             return or_(field < value[0], field > value[1])
         case "startswith":
             return field.startswith(value)
@@ -59,7 +67,7 @@ def _process_filter(filter):
         case "nendswith":
             return not_(field.endswith(value))
         case _:
-            raise MalformedInput(f"filter operator {operator} not supported")
+            raise MalformedInput(f'filter operator "{operator}" not supported')
 
 
 def _apply_filter(filter):
@@ -152,8 +160,6 @@ async def get_lenses(
 
     if filter:
         stmt = stmt.where(_build_filter_query(filter))
-
-    print(">>>", str(stmt))
 
     total = 0
 
