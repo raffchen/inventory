@@ -7,9 +7,116 @@ from app.dependencies.exceptions import (
 )
 from app.models import Lenses, LensesHistory, UpdateField, UpdateType
 from app.schemas import LensCreate, LensUpdate
-from sqlalchemy import desc, func, select, update, or_
+from sqlalchemy import desc, func, select, update, or_, and_, not_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+def _process_filter(filter):
+    # if any exceptions occur, just let the query fail
+    operator = filter["operator"]
+    field = getattr(Lenses, filter["field"])
+    value = filter["value"]
+
+    if field == "q":
+        # search over all text fields
+        return or_(
+            Lenses.lens_type.ilike(f"%{value}%"),
+            Lenses.comment.ilike(f"%{value}%"),
+        )
+
+    match operator:
+        case "eq":
+            return field == value
+        case "ne":
+            return field != value
+        case "lt":
+            return field < value
+        case "gt":
+            return field > value
+        case "lte":
+            return field <= value
+        case "gte":
+            return field >= value
+        case "in":
+            return field in value
+        case "nin":
+            return not_(field in value)
+        case "contains":
+            return field.ilike(f"%{value}%")
+        case "ncontains":
+            return not_(field.ilike(f"%{value}%"))
+        case "between":
+            return and_(field >= value[0], field <= value[1])
+        case "nbetween":
+            return or_(field < value[0], field > value[1])
+        case "startswith":
+            return field.startswith(value)
+        case "nstartswith":
+            return not_(field.startswith(value))
+        case "endswith":
+            return field.endswith(value)
+        case "nendswith":
+            return not_(field.endswith(value))
+        case _:
+            raise MalformedInput(f"filter operator {operator} not supported")
+
+
+def _apply_filter(filter):
+    if "field" in filter:
+        return _process_filter(filter)
+    else:  # logical filter
+        conditions = []
+
+        for subfilter in filter["value"]:
+            if "field" in subfilter:
+                conditions.append(_process_filter(subfilter))
+            else:
+                conditions.append(_apply_filter(subfilter))
+
+        if filter["operator"] == "and":
+            return and_(*conditions)
+        else:
+            return or_(*conditions)
+
+
+def _build_filter_query(filters):
+    """
+    example:
+    [
+        {
+            operator: "or",
+            value: [
+                {
+                    operator: "and",
+                    value: [
+                        {
+                            field: "sphere",
+                            operator: "lt",
+                            value: -3.0,
+                        },
+                        {
+                            field: "unit_price",
+                            operator: "ge",
+                            value: 80,
+                        },
+                    ],
+                },
+                {
+                    field: "cylinder",
+                    operator: "eq",
+                    value: 2,
+                },
+            ],
+        },
+    ]
+    """
+    conditions = []
+
+    for filter in filters:
+        conditions.append(_apply_filter(filter))
+
+    return and_(*conditions)
 
 
 async def get_lenses(
@@ -44,34 +151,9 @@ async def get_lenses(
         stmt = stmt.order_by(Lenses.id)
 
     if filter:
-        for field, value in filter.items():
-            if field == "q":
-                # search over all text fields
-                stmt = stmt.where(
-                    or_(
-                        Lenses.lens_type.ilike(f"%{value}%"),
-                        Lenses.comment.ilike(f"%{value}%"),
-                    )
-                )
-            elif field == "id":
-                if isinstance(value, int):
-                    stmt = stmt.where(Lenses.id == value)
-                elif isinstance(value, list) and all(isinstance(i, int) for i in value):
-                    stmt = stmt.where(Lenses.id.in_(value))
-                else:
-                    raise MalformedInput(f"Id filter must be int or list of ints")
-            else:
-                # TODO: handle if value type doesn't match field e.g. {"name": 2}
-                # TODO: once table fields are finalized, can turn this into a match statement
-                filter_column = getattr(Lenses, field, None)
-                if not filter_column:
-                    raise MalformedInput(
-                        f"Requested filter on field {field} but field doesn't exist"
-                    )
-                if isinstance(value, str):
-                    stmt = stmt.where(filter_column.ilike(f"%{value}%"))
-                else:
-                    stmt = stmt.where(filter_column == value)
+        stmt = stmt.where(_build_filter_query(filter))
+
+    print(">>>", str(stmt))
 
     total = 0
 

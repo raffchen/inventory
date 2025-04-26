@@ -25,9 +25,8 @@ async def read_lenses(
     response: Response,
     sort: Annotated[Json[list[list[str]]] | None, Query()] = None,
     range: Annotated[Json[list[int]] | None, Query(min_length=2, max_length=2)] = None,
-    filter: Annotated[Json[dict[str, Any]] | None, Query()] = None,
+    filter: Annotated[Json | None, Query()] = None,
 ):
-    print(">>>", sort, range, filter)
     try:
         products, total = await lenses.get_lenses(db_session, sort, range, filter)
     except MalformedInput as e:
