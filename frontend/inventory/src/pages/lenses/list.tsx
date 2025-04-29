@@ -1,15 +1,15 @@
-import { getDefaultFilter } from "@refinedev/core";
+import { SearchOutlined } from "@ant-design/icons";
 import {
   DeleteButton,
   EditButton,
+  FilterDropdown,
+  getDefaultSortOrder,
+  List,
   ShowButton,
   useTable,
-  getDefaultSortOrder,
-  FilterDropdown,
-  List,
 } from "@refinedev/antd";
-import { SearchOutlined } from "@ant-design/icons";
-import { Button, Table, Space, Input, InputNumber, theme, Select, Slider } from "antd";
+import { getDefaultFilter } from "@refinedev/core";
+import { Button, InputNumber, Select, Space, Table, theme } from "antd";
 
 export const LensList = () => {
   const { token } = theme.useToken();
