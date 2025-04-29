@@ -1,4 +1,17 @@
-import type { DataProvider } from "@refinedev/core";
+import type { CrudFilter, DataProvider } from "@refinedev/core";
+
+const validateFilters = (filters: CrudFilter[]) => {
+  console.log(filters);
+  const validated = filters.map((filter) => {
+    if ("field" in filter && ["id", "sphere", "cylinder"].includes(filter.field)) {
+      return { ...filter, value: Number(filter.value) };
+    }
+    return filter;
+  });
+
+  console.log(validated);
+  return validated;
+};
 
 export const dataProvider = (apiUrl: string): DataProvider => ({
   getList: async ({ resource, pagination, filters, sorters, meta }) => {
@@ -22,7 +35,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
 
     // TODO: Validate filters
     if (filters && filters.length > 0) {
-      params.append("filter", JSON.stringify(filters));
+      params.append("filter", JSON.stringify(validateFilters(filters)));
     }
 
     const response = await fetch(`${apiUrl}/${resource}?${params.toString()}`);

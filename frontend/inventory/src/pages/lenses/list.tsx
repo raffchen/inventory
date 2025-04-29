@@ -1,131 +1,141 @@
-import { useTable, useNavigation } from "@refinedev/core";
-
-import { Link } from "react-router";
+import { getDefaultFilter } from "@refinedev/core";
+import {
+  DeleteButton,
+  EditButton,
+  ShowButton,
+  useTable,
+  getDefaultSortOrder,
+  FilterDropdown,
+  List,
+} from "@refinedev/antd";
+import { SearchOutlined } from "@ant-design/icons";
+import { Button, Table, Space, Input, InputNumber, theme, Select, Slider } from "antd";
 
 export const LensList = () => {
-  const {
-    tableQuery: { data, isLoading },
-    current,
-    setCurrent,
-    pageCount,
-    sorters,
-    setSorters,
-  } = useTable({
-    pagination: { current: 1, pageSize: 10 },
+  const { token } = theme.useToken();
+
+  const { tableProps, sorters, filters, setFilters } = useTable({
     sorters: { initial: [{ field: "id", order: "asc" }] },
+    syncWithLocation: false,
   });
 
-  const { showUrl, editUrl } = useNavigation();
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  const onPrevious = () => {
-    if (current > 1) {
-      setCurrent(current - 1);
-    }
+  const clearAllFilters = () => {
+    setFilters([], "replace");
   };
 
-  const onNext = () => {
-    if (current < pageCount) {
-      setCurrent(current + 1);
-    }
-  };
-
-  const onPage = (page: number) => {
-    setCurrent(page);
-  };
-
-  const getSorter = (field: string) => {
-    const sorter = sorters?.find((sorter) => sorter.field === field);
-
-    if (sorter) {
-      return sorter.order;
-    }
-  };
-
-  const onSort = (field: string) => {
-    const sorter = getSorter(field);
-    setSorters(
-      sorter === "desc"
-        ? []
-        : [
-            {
-              field,
-              order: sorter === "asc" ? "desc" : "asc",
-            },
-          ]
-    );
-  };
-
-  const indicator = { asc: "⬆️", desc: "⬇️" };
+  console.log(tableProps);
 
   return (
-    <div>
-      <h1>Products</h1>
-      <table>
-        <thead>
-          <tr>
-            <th onClick={() => onSort("id")}>ID {indicator[getSorter("id")]}</th>
-            <th onClick={() => onSort("lens_type")}>
-              Type {indicator[getSorter("lens_type")]}
-            </th>
-            <th onClick={() => onSort("sphere")}>
-              Sphere {indicator[getSorter("sphere")]}
-            </th>
-            <th onClick={() => onSort("cylinder")}>
-              Cylinder {indicator[getSorter("cylinder")]}
-            </th>
-            <th onClick={() => onSort("unit_price")}>
-              Unit Price {indicator[getSorter("unit_price")]}
-            </th>
-            <th onClick={() => onSort("quantity")}>
-              Quantity {indicator[getSorter("quantity")]}
-            </th>
-            <th onClick={() => onSort("storage_limit")}>
-              Storage Limit {indicator[getSorter("storage_limit")]}
-            </th>
-            <th>Comment</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.data?.map((lens) => (
-            <tr key={lens.id}>
-              <td>{lens.id}</td>
-              <td>{lens.lens_type}</td>
-              <td>{lens.sphere}</td>
-              <td>{lens.cylinder}</td>
-              <td>{lens.unit_price.toFixed(2)}</td>
-              <td>{lens.quantity}</td>
-              <td>{lens.storage_limit}</td>
-              <td>{lens.comment}</td>
-              <td>
-                <Link to={showUrl("lenses", lens.id)}>Show</Link>
-                <Link to={editUrl("lenses", lens.id)}>Edit</Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="pagination">
-        <button type="button" onClick={onPrevious}>
-          {"<"}
-        </button>
-        <div>
-          {current - 1 > 0 && (
-            <span onClick={() => onPage(current - 1)}>{current - 1}</span>
+    <List
+      headerButtons={({ defaultButtons }) => (
+        <>
+          <Button
+            type="primary"
+            onClick={clearAllFilters}
+            disabled={filters.length === 0}
+          >
+            Reset Filters
+          </Button>
+          {defaultButtons}
+        </>
+      )}
+    >
+      <Table
+        {...tableProps}
+        rowKey="id"
+        pagination={{ ...tableProps.pagination, showSizeChanger: true }}
+      >
+        <Table.Column
+          dataIndex="id"
+          title="ID"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("id", sorters)}
+          filterIcon={(filtered) => (
+            <SearchOutlined
+              style={{
+                color: filtered ? token.colorPrimary : undefined,
+              }}
+            />
           )}
-          <span className="current">{current}</span>
-          {current + 1 < pageCount && (
-            <span onClick={() => onPage(current + 1)}>{current + 1}</span>
+          filterDropdown={(props) => (
+            <FilterDropdown {...props}>
+              <InputNumber placeholder={"Search ID"} />
+            </FilterDropdown>
           )}
-        </div>
-        <button type="button" onClick={onNext}>
-          {">"}
-        </button>
-      </div>
-    </div>
+          defaultFilteredValue={getDefaultFilter("id", filters, "eq")}
+        />
+        <Table.Column
+          dataIndex="lens_type"
+          title="Lens Type"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("lens_type", sorters)}
+          filterDropdown={(props) => (
+            <FilterDropdown {...props}>
+              <Select style={{ width: "100%" }} placeholder={"Select Lens Type"}>
+                <Select.Option value="CR39">CR39</Select.Option>
+                <Select.Option value="High Index 1.67">High Index 1.67</Select.Option>
+                <Select.Option value="High Index 1.74">High Index 1.74</Select.Option>
+                <Select.Option value="Polycarbonate">Polycarbonate</Select.Option>
+                <Select.Option value="Trivex">Trivex</Select.Option>
+              </Select>
+            </FilterDropdown>
+          )}
+          defaultFilteredValue={getDefaultFilter("lens_type", filters, "eq")}
+        />
+        <Table.Column
+          dataIndex="sphere"
+          title="Sphere"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("sphere", sorters)}
+          filterDropdown={(props) => (
+            <FilterDropdown {...props}>
+              <InputNumber placeholder={"Search Sphere Value"} />
+            </FilterDropdown>
+          )}
+          defaultFilteredValue={getDefaultFilter("sphere", filters, "eq")}
+        />
+        <Table.Column
+          dataIndex="cylinder"
+          title="Cylinder"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("cylinder", sorters)}
+          filterDropdown={(props) => (
+            <FilterDropdown {...props}>
+              <InputNumber placeholder={"Search Cylinder Value"} />
+            </FilterDropdown>
+          )}
+          defaultFilteredValue={getDefaultFilter("cylinder", filters, "eq")}
+        />
+        <Table.Column
+          dataIndex="unit_price"
+          title="Unit Price"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("unit_price", sorters)}
+        />
+        <Table.Column
+          dataIndex="quantity"
+          title="Quantity"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("quantity", sorters)}
+        />
+        <Table.Column
+          dataIndex="storage_limit"
+          title="Storage Limit"
+          sorter
+          defaultSortOrder={getDefaultSortOrder("storage_limit", sorters)}
+        />
+        <Table.Column dataIndex="comment" title="Comment" />
+        <Table.Column
+          title="Actions"
+          render={(_, record) => (
+            <Space>
+              <ShowButton hideText size="small" recordItemId={record.id} />
+              <EditButton hideText size="small" recordItemId={record.id} />
+              <DeleteButton hideText size="small" recordItemId={record.id} />
+            </Space>
+          )}
+        />
+      </Table>
+    </List>
   );
 };
