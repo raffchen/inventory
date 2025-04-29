@@ -1,7 +1,9 @@
-import { useOne } from "@refinedev/core";
+import { useShow } from "@refinedev/core";
 
 export const LensShow = () => {
-  const { data, isLoading } = useOne({ resource: "lenses", id: 1 });
+  const {
+    query: { data, isLoading },
+  } = useShow();
 
   if (isLoading) {
     return <div>Loading...</div>;

@@ -1,4 +1,6 @@
-import { useTable } from "@refinedev/core";
+import { useTable, useNavigation } from "@refinedev/core";
+
+import { Link } from "react-router";
 
 export const LensList = () => {
   const {
@@ -9,10 +11,11 @@ export const LensList = () => {
     sorters,
     setSorters,
   } = useTable({
-    resource: "lenses",
     pagination: { current: 1, pageSize: 10 },
     sorters: { initial: [{ field: "id", order: "asc" }] },
   });
+
+  const { showUrl, editUrl } = useNavigation();
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -84,6 +87,7 @@ export const LensList = () => {
               Storage Limit {indicator[getSorter("storage_limit")]}
             </th>
             <th>Comment</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -97,6 +101,10 @@ export const LensList = () => {
               <td>{lens.quantity}</td>
               <td>{lens.storage_limit}</td>
               <td>{lens.comment}</td>
+              <td>
+                <Link to={showUrl("lenses", lens.id)}>Show</Link>
+                <Link to={editUrl("lenses", lens.id)}>Edit</Link>
+              </td>
             </tr>
           ))}
         </tbody>

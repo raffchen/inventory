@@ -1,10 +1,7 @@
 import { useForm } from "@refinedev/core";
 
 export const LensCreate = () => {
-  const { onFinish, mutation } = useForm({
-    action: "create",
-    resource: "lenses",
-  });
+  const { onFinish, mutation } = useForm();
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -1,11 +1,7 @@
 import { useForm, useSelect } from "@refinedev/core";
 
 export const LensEdit = () => {
-  const { onFinish, mutation, query } = useForm({
-    action: "edit",
-    resource: "lenses",
-    id: "11",
-  });
+  const { onFinish, mutation, query } = useForm();
 
   const record = query?.data?.data;
 
