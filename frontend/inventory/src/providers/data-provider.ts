@@ -33,7 +33,6 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
       );
     }
 
-    // TODO: Validate filters
     if (filters && filters.length > 0) {
       params.append("filter", JSON.stringify(validateFilters(filters)));
     }
@@ -95,6 +94,7 @@ export const dataProvider = (apiUrl: string): DataProvider => ({
   },
 
   deleteOne: async () => {
+    // TODO
     throw new Error("Not implemented");
   },
 
