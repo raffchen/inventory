@@ -9,7 +9,7 @@ import {
   useTable,
 } from "@refinedev/antd";
 import { getDefaultFilter } from "@refinedev/core";
-import { Button, InputNumber, Select, Space, Table, theme } from "antd";
+import { Button, InputNumber, Select, Space, Table, theme, Tooltip } from "antd";
 
 export const LensList = () => {
   const { token } = theme.useToken();
@@ -124,7 +124,26 @@ export const LensList = () => {
           sorter
           defaultSortOrder={getDefaultSortOrder("storage_limit", sorters)}
         />
-        <Table.Column dataIndex="comment" title="Comment" />
+        <Table.Column
+          dataIndex="comment"
+          title="Comment"
+          key="comment"
+          width={"25rem"}
+          render={(text: string) => (
+            <Tooltip title={text}>
+              <div
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: "25rem",
+                }}
+              >
+                {text}
+              </div>
+            </Tooltip>
+          )}
+        />
         <Table.Column
           title="Actions"
           render={(_, record) => (
