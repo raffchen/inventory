@@ -1,8 +1,8 @@
 """First revision
 
-Revision ID: 33ba393519c0
+Revision ID: 746eaf24501c
 Revises: 
-Create Date: 2025-04-14 22:46:24.275260-07:00
+Create Date: 2025-05-20 22:05:04.937308-07:00
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '33ba393519c0'
+revision = '746eaf24501c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,7 +25,7 @@ def upgrade():
     sa.Column('lens_type', sa.String(), nullable=False),
     sa.Column('sphere', sa.Numeric(precision=4, scale=2), nullable=False),
     sa.Column('cylinder', sa.Numeric(precision=4, scale=2), nullable=False),
-    sa.Column('unit_price', sa.Numeric(precision=5, scale=2), nullable=False),
+    sa.Column('unit_price', sa.Numeric(precision=6, scale=2), nullable=False),
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.Column('storage_limit', sa.Integer(), nullable=True),
     sa.Column('comment', sa.String(), nullable=True),

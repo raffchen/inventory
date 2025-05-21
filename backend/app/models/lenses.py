@@ -32,7 +32,7 @@ class Lenses(Base):
     lens_type: Mapped[str]
     sphere: Mapped[Decimal] = mapped_column(Numeric(4, 2))
     cylinder: Mapped[Decimal] = mapped_column(Numeric(4, 2))
-    unit_price: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    unit_price: Mapped[Decimal] = mapped_column(Numeric(6, 2))
     quantity: Mapped[int]
     storage_limit: Mapped[int | None]
     # sequence_number: Mapped[int | None]
