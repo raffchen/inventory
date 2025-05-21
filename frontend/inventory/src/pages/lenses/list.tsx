@@ -17,6 +17,9 @@ export const LensList = () => {
   const { tableProps, sorters, filters, setFilters } = useTable({
     sorters: { initial: [{ field: "id", order: "asc" }] },
     syncWithLocation: false,
+    pagination: {
+      pageSize: 20,
+    },
   });
 
   const clearAllFilters = () => {
@@ -43,7 +46,11 @@ export const LensList = () => {
       <Table
         {...tableProps}
         rowKey="id"
-        pagination={{ ...tableProps.pagination, showSizeChanger: true }}
+        pagination={{
+          ...tableProps.pagination,
+          showSizeChanger: true,
+          showQuickJumper: true,
+        }}
       >
         <Table.Column
           dataIndex="id"
