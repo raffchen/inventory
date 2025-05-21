@@ -1,12 +1,24 @@
-import { useForm, useSelect, Create } from "@refinedev/antd";
+import { Create, SaveButton, useForm } from "@refinedev/antd";
+import { useBack } from "@refinedev/core";
 
-import { Form, Input, Select, InputNumber } from "antd";
+import { Button, Form, Input, InputNumber, Space } from "antd";
 
 export const LensCreate = () => {
   const { formProps, saveButtonProps } = useForm();
 
   return (
-    <Create saveButtonProps={saveButtonProps} title="Create Lens">
+    <Create
+      saveButtonProps={saveButtonProps}
+      title="Create Lens"
+      footerButtons={() => (
+        <Space>
+          <Button danger onClick={useBack()}>
+            Cancel
+          </Button>
+          <SaveButton />
+        </Space>
+      )}
+    >
       <Form {...formProps} layout="vertical">
         <Form.Item label="ID" name="id" rules={[{ required: true }]}>
           <InputNumber controls={false} style={{ width: "100%" }} />

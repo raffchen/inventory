@@ -1,6 +1,7 @@
-import { useForm, useSelect, Edit } from "@refinedev/antd";
+import { Edit, SaveButton, useForm } from "@refinedev/antd";
+import { useBack } from "@refinedev/core";
 
-import { Form, Input, Select, InputNumber } from "antd";
+import { Button, Form, Input, InputNumber, Space } from "antd";
 
 export const LensEdit = () => {
   const { formProps, saveButtonProps, query } = useForm();
@@ -8,7 +9,18 @@ export const LensEdit = () => {
   const record = query?.data?.data;
 
   return (
-    <Edit saveButtonProps={saveButtonProps} title="Edit Lens">
+    <Edit
+      saveButtonProps={saveButtonProps}
+      title="Edit Lens"
+      footerButtons={() => (
+        <Space>
+          <Button danger onClick={useBack()}>
+            Cancel
+          </Button>
+          <SaveButton />
+        </Space>
+      )}
+    >
       <Form {...formProps} layout="vertical">
         <Form.Item label="ID">
           <Input disabled placeholder={record?.id?.toString()} />
